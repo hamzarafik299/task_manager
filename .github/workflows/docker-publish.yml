@@ -1,0 +1,64 @@
+
+name: Task Manager CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run Pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Recuperer le code source
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Installer Docker Compose
+      - name: Check Docker
+        run: docker compose version
+
+      # 3. Construire et executer les tests
+      - name: Run tests
+        run: docker compose --profile testing run --build --rm tests
+
+  publish:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    needs: test
+
+    # Publier uniquement apres un push sur main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      # 1. Recuperer le code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Configurer Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Connexion a Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 4. Construire et publier l'image
+      - name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/task-manager:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/task-manager:${{ github.sha }}
