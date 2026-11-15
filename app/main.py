@@ -14,7 +14,7 @@ class Task(BaseModel):
 
 @app.get("/")
 def home():
-    return {"message": "Task Manager API is running"}
+    return {"message": "Hello from Docker!"}
 
 
 @app.get("/tasks")

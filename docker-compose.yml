@@ -8,3 +8,14 @@ services:
     volumes:
       - ./app:/app/app
     restart: unless-stopped
+
+  tests:
+    build: .
+    command: pytest -v
+    volumes:
+      - ./app:/app/app
+      - ./tests:/app/tests
+    environment:
+      - PYTHONPATH=/app
+    profiles:
+      - testing
